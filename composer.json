@@ -1,0 +1,19 @@
+{
+    "name": "bis86/impuestos-ni",
+    "description": "Calcular impuestos gubernamentales correctamente, basado en la políticas nacionales.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Bismarck Sevilla",
+            "email": "digital.nicaragua@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Impuestos\\":"src/"
+        }
+    }
+}
