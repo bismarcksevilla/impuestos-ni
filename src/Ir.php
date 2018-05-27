@@ -2,122 +2,236 @@
 namespace Impuestos;
 
 /**
+ *
+ * @author Bismarck Sevilla <digital.nicaragua@gmail.com>
+ *
  * Calcular IR Anual.
+ * Procesa ultimos 12 Pagos.
+ * Debe exluir el impuesto del Inss.
  */
 class Ir
 {
-
-    # Sueldo
+    /**
+     *
+     * @access protected
+     * @var array
+     */
     private $pagos = [];
 
+    /**
+     *
+     * @access protected
+     * @var float
+     */
+    private $promedio;
+
+    /**
+     *
+     * @access protected
+     * @var string
+     */
+    private $modo;
+
+    /**
+     *
+     * @access protected
+     * @var object
+     */
+    private $impuestos;
+
+    /**
+     *
+     * @access protected
+     * @var object
+     */
+    private $impuesto;
 
 
-    public function calcular( $data, $Obj = false ){
-
-        # Salario Ir
-        $Salario = $data->TotalIngresos - $data->InssEmpleado;
-
-        if( $Salario >0 ):
-
-            # Tabla de Calculos IR Vigente
-            $IR[5] = [ "Desde" =>0,          "Porcentaje"=>0,  "Base"=>0,     "Exceso"=>0 ];
-            $IR[4] = [ "Desde" =>100000.001, "Porcentaje"=>15, "Base"=>0,     "Exceso"=>100000 ];
-            $IR[3] = [ "Desde" =>200000.001, "Porcentaje"=>20, "Base"=>15000, "Exceso"=>200000 ];
-            $IR[2] = [ "Desde" =>350000.001, "Porcentaje"=>25, "Base"=>45000, "Exceso"=>350000 ];
-            $IR[1] = [ "Desde" =>500000.001, "Porcentaje"=>30, "Base"=>82500, "Exceso"=>500000 ];
-
-            # Ir Anual Exacto
-            if( @$Obj ):
-
-                # Calcula discriminando los pagos recibidos.
+    # # # # # # # # # #
+    # # P U B L I C # #
+    # # # # # # # # # #
 
 
+    /**
+     * @access public
+     * @param array $pagos
+     * @param string $modo
+     * @param object $json_tabla_impuestos
+     */
+    public function __construct($pagos=false, $modo='Mensual', $json_tabla_impuestos=false)
+    {
+        $this->setPagos($pagos);
 
-            # Ir Proyectado Anual
-            else:
+        $this->setModo($modo);
 
-                # Proyectar
-                if( $data->Ciclo == "Quincenal"):
-                    $SalarioAnio  = $Salario * 24;
+        $this->setImpuestos($json_tabla_impuestos);
+    }
 
-                elseif( $data->Ciclo == "Semanal"):
-                    $SalarioAnio  = $Salario * 52;
+    /**
+     * @access public
+     * @param array $pagos
+     * @return object
+     */
+    public function setPagos($pagos)
+    {
+        foreach ($pagos as $pago) {
+            if ($pago) {
+                $this->addPago($pago);
+            }
+        }
 
-                elseif( $data->Ciclo == "Mensual"):
-                    $SalarioAnio  = $Salario * 12;
-
-                else: # Mensual Default
-
-                    $SalarioAnio  = $Salario * 12;
-                endif;
-
-            endif;
-
-
-            # Identificar el rango de la matriz
-            switch ( $SalarioAnio ):
-
-                case ( $SalarioAnio  >= $IR[1]["Desde"] ):
-                    $rango = 1;
-                    break;
-
-                case ( $SalarioAnio  >= $IR[2]["Desde"] ):
-                    $rango = 2;
-                    break;
-
-                case ( $SalarioAnio  >= $IR[3]["Desde"] ):
-                    $rango = 3;
-                    break;
-
-                case ( $SalarioAnio  >= $IR[4]["Desde"] ):
-                    $rango = 4;
-                    break;
-
-                case ( $SalarioAnio  >= $IR[5]["Desde"] ):
-                    $rango = 5;
-                    break;
-
-                default:
-                    $rango = 5;
-                    break;
-
-            endswitch;
+        return $this;
+    }
 
 
-            $valor = (  ( $SalarioAnio - $IR[$rango]["Exceso"] ) *
-                     ( $IR[$rango]["Porcentaje"]/100) ) + $IR[$rango]["Base"] ;
+    /**
+     * @access public
+     * @return array
+     */
+    public function getPagos()
+    {
+        return $this->pagos;
+    }
+
+    /**
+     * @access public
+     * @param string $modo
+     * @return object
+     */
+    public function setModo($modo)
+    {
+        if ($modo=='Mensual' || $modo=='Semanal' || $modo=='Quincenal') {
+            $this->modo = $modo;
+        } else {
+            $this->modo = "Mensual";
+        }
+        return $this;
+    }
+
+    /**
+     * @access public
+     * @return string
+     */
+    public function getModo()
+    {
+        return $this->modo;
+    }
+
+    /**
+     * @access public
+     * @return float
+     */
+    public function getPromedio()
+    {
+        if ($this->promedio) {
+            return $this->promedio;
+        } else {
+            return $this->calcularPromedio();
+        }
+    }
+
+    /**
+     * @access private
+     * @param string $path
+     * @return object
+     */
+    public function setImpuestos($json= false)
+    {
+        if ($json) {
+            $this->impuestos = json_decode($json);
+        } else {
+            $this->impuestos = json_decode(file_get_contents('src/data/ir_tabla_impuestos.json'));
+        }
+        return $this;
+    }
+
+    public function getImpuestos(){
+        return $this->impuestos;
+    }
 
 
-            # Calcula discriminando los pagos recibidos.
-            if( @$Obj ):
-
-                //
-
-            else:
-
-                # Proyectar Anio
-                if( $data->Ciclo == "Quincenal"):
-
-                    return $valor/24;
-
-                elseif( $data->Ciclo == "Semanal"):
-
-                    return $valor/52;
-
-                else: # Mensual
-
-                    return $valor/12;
-                endif;
-
-            endif;
-
-        else:
-
-            return 0;
-
-        endif;
-
-    } # END
+    public function getImpuesto()
+    {
+        if ($this->impuesto) {
+            return $this->impuesto;
+        } else {
+            foreach ($this->getImpuestos() as $key => $object) {
+                if ($this->getSalarioAnual() >= $object->Desde) {
+                    $this->impuesto = $object;
+                }
+            }
+            return $this->impuesto;
+        }
+    }
 
 
+    public function get(){
+        return ((($this->getSalarioAnual()-$this->getImpuesto()->Exceso) * ($this->getImpuesto()->Porcentaje/100)) + $this->getImpuesto()->Base) /12;
+    }
+
+
+    # # # # # # # # # # #
+    # # P R I V A T E # #
+    # # # # # # # # # # #
+
+    /**
+     * @access private
+     * @param float $pago
+     * @return object
+     */
+    private function addPago($pago)
+    {
+        $this->pagos[] = $pago;
+
+        return $this;
+    }
+
+    /**
+     * @access private
+     * @return object
+     */
+    private function calcularPromedio()
+    {
+        return $this->getTotalPagado() / $this->getTotalPagos();
+    }
+
+    /**
+     * Proyectar Salario
+     *
+     * @access private
+     * @return float
+     */
+    private function getSalarioAnual()
+    {
+        if ($this->getModo() == "Quincenal") {
+            return $this->getPromedio() * 24;
+        } elseif ($this->getModo() == "Semanal") {
+            return $this->getPromedio() * 52;
+        } else {
+            return $this->getPromedio() * 12;
+        }
+    }
+
+    /**
+     * @access private
+     * @return int
+     */
+    private function getTotalPagos()
+    {
+        return count($this->pagos);
+    }
+
+    /**
+     * @access private
+     * @return float
+     */
+    public function getTotalPagado()
+    {
+        $total = 0;
+
+        foreach ($this->pagos as $valor) {
+            $total += $valor;
+        }
+        return $total;
+    }
 }

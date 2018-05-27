@@ -57,8 +57,6 @@ class Inss
      */
     public function __construct($obj_DateTime= false, $json_historial= false)
     {
-        date_default_timezone_set('America/Managua');
-
         $this->setHistorial($json_historial);
 
         $this->setFecha($obj_DateTime);
@@ -186,7 +184,7 @@ class Inss
         if ($json) {
             $this->historial = json_decode($json);
         } else {
-            $this->historial = json_decode(file_get_contents('src/data/historial_inss.json'));
+            $this->historial = json_decode(file_get_contents('src/data/inss_historial.json'));
         }
 
         return $this;
