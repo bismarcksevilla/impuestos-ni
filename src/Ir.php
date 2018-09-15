@@ -91,6 +91,7 @@ class Ir extends Inss
         $this->setCalcularInss($calcularInss);
 
         $this->setHistorial();
+        
         $this->setFecha();
     }
 
