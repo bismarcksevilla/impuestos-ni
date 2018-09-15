@@ -39,10 +39,8 @@ $Ir = new Impuestos\Ir([
     <div class="container">
 
         <div class="row">
-
             <div class="col-sm-12 text-center">
-
-                <h1>Calculo de Impuestos</h1>
+                <h4>Calculo de Impuestos</h4>
                 <hr>
             </div>
         </div>
@@ -52,12 +50,21 @@ $Ir = new Impuestos\Ir([
 
             <form class="form col-sm-4 card card-body">
 
-                <p class="text-bold lead">Calcular Inss</p>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <h4 class="text-center">Calcular Inss:</h4>
+                    </div>
+                </div>
 
                 <div class="form-group">
 
                     <label class="form-text text-muted small">Salario Mensual:</label>
-                    <input type="number" class="form-control" name="salarioinss" value="<?php echo $_GET['salarioinss'] ?>" placeholder="Salario Mensual">
+                    <div class="input-group">
+                        <div class="input-group-prepend" >
+                            <div class="input-group-text" style="background-color:white;">C$</div>
+                        </div>
+                        <input type="number" class="form-control" name="salarioinss" value="<?php echo $_GET['salarioinss'] ?>" placeholder="Salario Mensual">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -81,11 +88,9 @@ $Ir = new Impuestos\Ir([
                             echo '<tr><td colspan="2"><p class="lead m-0"><strong>Resultado:</strong></p></td></tr>';
                             echo
                                  "<tr><td><small>Salario Mensual: </small></td> <td> C$ <strong>". number_format($Inss->getSalario(), 2) ."</strong></td></tr>"
-                                ."<tr style='background-color:#f5f5f5;'><td><small>Impuesto Empleado:</small></td> <td> C$ <strong>".number_format($Inss->getEmpleado(), 2) ."</strong></td></tr>"
-                                ."<tr style='background-color:#f5f5f5;'><td><small>Impuesto Patronal:</small></td> <td> C$ <strong>".number_format($Inss->getPatronal(), 2) ."</strong></td></tr>"
-                                ."<tr><td><small>Salario Mínimo:</small></td><td> C$ <strong>". number_format($Inss->getMinimo(), 2)."</strong></td></tr>"
-                                ."<tr><td><small>Salario Máximo:</small></td><td> C$ <strong>". number_format($Inss->getMaximo(), 2)."</strong></td></tr>"
-                                ."<tr style='background-color:#ddd;'><td><small>Ciclo de Impuestos:</small></td> <td> <strong>". $Inss->getCiclo()->format('d/m/Y H:i:s')."</strong></td></tr>"
+                                ."<tr style='background-color:#ddd;'><td><small>Impuesto Empleado:</small></td> <td> C$ <strong>".number_format($Inss->getInssEmpleado(), 2) ."</strong></td></tr>"
+                                ."<tr style='background-color:#f5f5f5;'><td><small>Impuesto Patronal:</small></td> <td> C$ <strong>".number_format($Inss->getInssPatronal(), 2) ."</strong></td></tr>"
+                                ."<tr style=''><td><small>Ciclo de Impuestos:</small></td> <td> <strong>". $Inss->getCiclo()->format('d/m/Y')."</strong></td></tr>"
                             ;
                         endif;
                     ?>
@@ -98,56 +103,128 @@ $Ir = new Impuestos\Ir([
             </form>
 
 
-            <form class="form col-sm-7 offset-sm-1 card card-body">
+            <form class="form col-sm-8">
+                <div class="card card-body">
 
-                <div class="row">
-                    <div class="col-sm-12">
-                        <p class="text-bold lead m-0">Calcular Ir Anual:</p>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-sm-6  form-inline align-items-center">
-
-                        <p class="form-text text-muted small">Escriba el salario Mensual de los ultimos pagos:</p>
-
-                        <?php for ($i=1; $i < 13 ; $i++): ?>
-                            <label class="form-text small col-sm-2 col-form-label col-form-label-sm">Mes<?php echo $i ?>:</label>
-                            <div class="input-group col-sm-10 mt-2">
-                                <div class="input-group-prepend" >
-                                    <div class="input-group-text" style="background-color:white;">C$</div>
-                                </div>
-                                <input type="number"  name="ir<?php echo $i ?>" value="<?php echo @$_GET['ir'.$i]?>" placeholder="0.00" class="form-control form-control-sm">
-                            </div>
-                        <?php endfor ?>
-
-                        <div class="row">
-                            <div class="form-group col-sm-12 mt-3">
-                                <button type="submit" class="btn btn-primary">Calcular</button>
-                            </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <h4 class="text-center">Calcular Ir Anual:</h4>
                         </div>
                     </div>
 
-                    <div class="col-sm-6">
-                        <?php if (@$_GET['ir1']): ?>
-                            <table class="table">
-                                <tr>
-                                    <td><p class="m-0 small">IR</p></td>
-                                    <td><p class="m-0 text-bold"><?php echo number_format($Ir->get(), 2) ?></p></td>
-                                </tr>
-                                <tr>
-                                    <td><p class="m-0 small">Total Pagado</p></td>
-                                    <td><p class="m-0 text-bold"><?php echo number_format($Ir->getTotalPagado(), 2) ?></p></td>
-                                </tr>
+                    <div class="row">
+                        <div class="col-sm-6  form-inline align-items-center">
 
-                            </table>
-                        <?php endif; ?>
+                            <p class="form-text text-muted small col-sm-12">Escriba el salario Mensual de los ultimos pagos:</p>
+
+                            <?php for ($i=1; $i < 13 ; $i++): ?>
+                                <label class="form-text small col-sm-2 col-form-label col-form-label-sm">Mes<?php echo $i ?>:</label>
+                                <div class="input-group col-sm-10 mt-2">
+                                    <div class="input-group-prepend" >
+                                        <div class="input-group-text" style="background-color:white;">C$</div>
+                                    </div>
+                                    <input type="number"  name="ir<?php echo $i ?>" value="<?php echo @$_GET['ir'.$i]?>" placeholder="0.00" class="form-control form-control-sm">
+                                </div>
+                            <?php endfor ?>
+
+                            <div class="row">
+                                <div class="form-group col-sm-12 mt-3">
+                                    <button type="submit" class="btn btn-primary">Calcular</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <p class="m-0 lead">Tabla de referencia</p>
+                            <p class="m-0 small">Establecida en el Arto.52 de la Ley 822</p>
+                            <div class="table-responsive-sm">
+                                <table class="table table-sm table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col"><p class="m-0 small text-center"><strong>Desde</strong></p></th>
+                                            <th scope="col"><p class="m-0 small text-center"><strong>Exceso</strong></p></th>
+                                            <th scope="col"><p class="m-0 small text-center"><strong>Base</strong></p></th>
+                                            <th scope="col"><p class="m-0 small text-center"><strong>Porcentaje</strong></p></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                            foreach ($Ir->getTabla() as $key => $value) {
+                                                echo "
+                                                    <tr class='list'>
+                                                        <td class='text-right'><p class='m-0 small'>C$".number_format($value->Desde,2)."</p></td>
+                                                        <td class='text-right'><p class='m-0 small'>C$".number_format($value->Exceso,2)."</p></td>
+                                                        <td class='text-right'><p class='m-0 small'>".number_format($value->Base,2)."</p></td>
+                                                        <td class='text-center'><p class='m-0 small'>$value->Porcentaje%</p></td>
+                                                    </tr>"
+                                                ;
+                                            }
+                                        ?>
+                                    <tbody>
+                                </table>
+                            </div>
+
+                            <?php if (@$_GET['ir1']): ?>
+                                <table class="table">
+                                    <tr>
+                                        <td><p class="m-0 small">Pagos ingresados:</p></td>
+                                        <td>
+                                            <p class="m-0"><?php echo number_format($Ir->getCantidadPagos(), 0) .'/'. $Ir->getModo() ?></p>
+                                            <pre><code>$Ir->getCantidadPagos()<br>$Ir->getModo()</code></pre>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-secondary">
+                                        <td><p class="m-0 small">Ultimo Salario:</p></td>
+                                        <td>
+                                            <p class="m-0"><strong>C$ <?php echo number_format($Ir->getSalario(), 2) ?></strong></p>
+                                            <pre><code>$Ir->getSalario()</code></pre>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><p class="m-0 small">Salario Promedio:</p></td>
+                                        <td>
+                                            <p class="m-0"><strong>C$ <?php echo number_format($Ir->getPromedio(), 2) ?></strong></p>
+                                            <pre><code>$Ir->getPromedio()</code></pre>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-secondary">
+                                        <td><p class="m-0 small">Inss Empleado:</p></td>
+                                        <td>
+                                            <p class="m-0"><strong>C$ <?php echo number_format($Ir->getInssEmpleado(), 2) ?></strong></p>
+                                            <pre><code>$Ir->getInssEmpleado()</code></pre>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-primary">
+                                        <td><p class="m-0 small">IR:</p></td>
+                                        <td>
+                                            <p class="m-0"><?php echo number_format($Ir->getIr(), 2) ?></p>
+                                            <pre><code>$Ir->getIr()</code></pre>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><p class="m-0 small">Salario Proyectado:</p></td>
+                                        <td>
+                                            <p class="m-0"><strong>C$ <?php echo number_format($Ir->getProyeccion(), 2) ?></strong></p>
+                                            <pre><code>$Ir->getProyeccion()</code></pre>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><p class="m-0 small">Total Pagado:</p></td>
+                                        <td>
+                                            <p class="m-0"><?php echo number_format($Ir->getTotalPagado(), 2) ?></p>
+                                            <pre><code>$Ir->getTotalPagado()</code></pre>
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
 
-                    <pre><code style="background-color:#f5f5f5;"><?php var_dump($Ir) ?></code></pre>
-                <!--
-                -->
+                    <!--
+                        <pre><code style="background-color:#f5f5f5;"><?php var_dump($Ir) ?></code></pre>
+                    -->
+                </div>
             </form>
         </div>
 

@@ -1,11 +1,7 @@
-# Librería **Impuestos-ni**
+# **Impuestos-ni**
 
-Autor: **Bismarck Sevilla** <digital.nicaragua@gmail.com>/+505 8576-4131
+Esta librería está pensada para estandarizar los cálculos de impuestos relacionados con el gobierno de nicaragua.
 
-Actualizada: **05/2018**
+Actualmente no existe un instructivo claro para los desarrolladores, si no más bien la ley se presta a diversas interpretaciones lo que resulta en errores en los procesos de calculo por distintas organizaciones.
 
-Región: **Nicaragua**
-
-Esta librería está pensada para estandarizar los cálculos gubernamentales de impuestos ya que actualmente no existe un instructivo claro para los desarrolladores, si no más bien la ley se presta a diversas interpretaciones lo que resulta en errores en los procesos de calculo por distintas organizaciones.
-
-Tus aportes y comentarios son importantes.
+**Referencia Métodos ver archivo "[index.php](index.php)"** 

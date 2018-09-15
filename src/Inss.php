@@ -12,11 +12,6 @@
  * antigua, en este caso se debe recurrir a la definición
  * de porcentajes de impuestos almacenada en un historial
  * para que el calculo sea correcto.
- *
- * (i)  El gobierno debería brindar un servicio json oficial
- *      para consultar los impuestos.
- *
- * Mientras se incluirá un archivo json con los datos.
  */
 class Inss
 {
@@ -125,12 +120,11 @@ class Inss
         }
     }
 
-
     /**
      * @access public
      * @return float
      */
-    public function getPatronal()
+    public function getInssPatronal()
     {
         if ($this->salario <= $this->getMinimo()) {
             return $this->getMinimo()* ($this->getImpuestoPatronal()/100);
@@ -145,7 +139,7 @@ class Inss
      * @access public
      * @return float
      */
-    public function getEmpleado()
+    public function getInssEmpleado()
     {
         if ($this->salario <= $this->getMinimo()) {
             return $this->getMinimo()* ($this->getImpuestoEmpleado()/100);
@@ -156,23 +150,6 @@ class Inss
         }
     }
 
-    /**
-     * @access public
-     * @return float
-     */
-    public function getMinimo()
-    {
-        return  $this->getImpuestos()->minimo;
-    }
-
-    /**
-     * @access public
-     * @return float
-     */
-    public function getMaximo()
-    {
-        return  $this->getImpuestos()->maximo;
-    }
 
     /**
      * @access private
@@ -203,6 +180,47 @@ class Inss
     # # P R I V A T E # #
     # # # # # # # # # # #
 
+
+    /**
+     * @access private
+     * @return float
+     */
+    private function getMinimo()
+    {
+        return  $this->getImpuestos()->minimo;
+    }
+
+    /**
+     * @access private
+     * @return float
+     */
+    private function getMaximo()
+    {
+        return  $this->getImpuestos()->maximo;
+    }
+
+    /**
+     * Porcentaje de Impuesto Inss
+     *
+     * @access private
+     * @return float
+     */
+    private function getImpuestoPatronal()
+    {
+        return  $this->getImpuestos()->patronal;
+    }
+
+    /**
+     * Porcentaje de Impuesto Inss
+     *
+     * @access private
+     * @return float
+     */
+    private function getImpuestoEmpleado()
+    {
+        return  $this->getImpuestos()->empleado;
+    }
+
     /**
      * Recupera el impuesta según el reango de fechas
      * de historial de impuestos JSON
@@ -218,30 +236,12 @@ class Inss
             foreach ($this->getHistorial() as $fecha => $obj) {
                 $date = new \DateTime($fecha);
 
-                if ($this->getFecha() > $date) { // Menor a fecha actual
+                if ($this->getFecha() > $date) {
                     $obj->InicioCiclo = $date;
                     $this->impuestos = $obj;
                 }
             }
         }
         return  $this->impuestos;
-    }
-
-    /**
-     * @access private
-     * @return float
-     */
-    private function getImpuestoPatronal()
-    {
-        return  $this->getImpuestos()->patronal;
-    }
-
-    /**
-     * @access private
-     * @return float
-     */
-    private function getImpuestoEmpleado()
-    {
-        return  $this->getImpuestos()->empleado;
     }
 }

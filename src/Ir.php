@@ -1,6 +1,8 @@
 <?php
 namespace Impuestos;
 
+use Impuestos\Inss;
+
 /**
  *
  * @author Bismarck Sevilla <digital.nicaragua@gmail.com>
@@ -9,9 +11,10 @@ namespace Impuestos;
  * Procesa ultimos 12 Pagos.
  * Debe exluir el impuesto del Inss.
  */
-class Ir
+class Ir extends Inss
 {
     /**
+     * Historial de Pagos
      *
      * @access protected
      * @var array
@@ -19,6 +22,23 @@ class Ir
     private $pagos = [];
 
     /**
+     * Pago sin Inss
+     *
+     * @access protected
+     * @var array
+     */
+    private $pagosInss = [];
+
+    /**
+     * Calcula Inss de los pagos
+     *
+     * @access protected
+     * @var boolean
+     */
+    private $calcularInss;
+
+    /**
+     * Salario Promedio según los pagos.
      *
      * @access protected
      * @var float
@@ -26,21 +46,24 @@ class Ir
     private $promedio;
 
     /**
+     * Forma de Pago | Quincenal, Semanal, Mensual.
      *
      * @access protected
      * @var string
      */
-    private $modo;
+    private $modo="Mensual";
 
     /**
+     * Impuestos según tabla establecida
+     * en el Arto.52 de la Ley 822
      *
      * @access protected
      * @var object
      */
-    private $impuestos;
+    private $tabla;
 
     /**
-     *
+     * Valor Ir
      * @access protected
      * @var object
      */
@@ -54,17 +77,21 @@ class Ir
 
     /**
      * @access public
-     * @param array $pagos
-     * @param string $modo
-     * @param object $json_tabla_impuestos
+     * @param array $pagos  // Historial de Pagos
+     * @param string $modo  // Forma de Pago
+     * @param boolean $inss // Calcula Inss
+     * @param object $json_tabla_impuestos // Establecida en el Arto.52 de la Ley 822
      */
-    public function __construct($pagos=false, $modo='Mensual', $json_tabla_impuestos=false)
+    public function __construct($pagos=false, $calcularInss=true, $json_tabla_impuestos=false)
     {
         $this->setPagos($pagos);
 
-        $this->setModo($modo);
+        $this->setTabla($json_tabla_impuestos);
 
-        $this->setImpuestos($json_tabla_impuestos);
+        $this->setCalcularInss($calcularInss);
+
+        $this->setHistorial();
+        $this->setFecha();
     }
 
     /**
@@ -74,12 +101,16 @@ class Ir
      */
     public function setPagos($pagos)
     {
-        foreach ($pagos as $pago) {
-            if ($pago) {
-                $this->addPago($pago);
+        foreach ($pagos as $fecha => $pago) {
+            if ($pago>0) {
+                $this->addPago($pago, $fecha);
+
+                if ($this->getCalcularInss()) {
+                    $this->addPagoInss($pago, $fecha);
+                }
+                $this->setSalario($pago);
             }
         }
-
         return $this;
     }
 
@@ -102,8 +133,6 @@ class Ir
     {
         if ($modo=='Mensual' || $modo=='Semanal' || $modo=='Quincenal') {
             $this->modo = $modo;
-        } else {
-            $this->modo = "Mensual";
         }
         return $this;
     }
@@ -126,7 +155,8 @@ class Ir
         if ($this->promedio) {
             return $this->promedio;
         } else {
-            return $this->calcularPromedio();
+            $this->promedio = $this->getTotalPagado() / $this->getCantidadPagos();
+            return $this->promedio;
         }
     }
 
@@ -135,18 +165,19 @@ class Ir
      * @param string $path
      * @return object
      */
-    public function setImpuestos($json= false)
+    public function setTabla($json= false)
     {
         if ($json) {
-            $this->impuestos = json_decode($json);
+            $this->tabla = json_decode($json);
         } else {
-            $this->impuestos = json_decode(file_get_contents('src/data/ir_tabla_impuestos.json'));
+            $this->tabla = json_decode(file_get_contents('src/data/ir_tabla_impuestos.json'));
         }
         return $this;
     }
 
-    public function getImpuestos(){
-        return $this->impuestos;
+    public function getTabla()
+    {
+        return $this->tabla;
     }
 
 
@@ -155,8 +186,8 @@ class Ir
         if ($this->impuesto) {
             return $this->impuesto;
         } else {
-            foreach ($this->getImpuestos() as $key => $object) {
-                if ($this->getSalarioAnual() >= $object->Desde) {
+            foreach ($this->getTabla() as $key => $object) {
+                if ($this->getProyeccion() >= $object->Desde) {
                     $this->impuesto = $object;
                 }
             }
@@ -165,8 +196,12 @@ class Ir
     }
 
 
-    public function get(){
-        return ((($this->getSalarioAnual()-$this->getImpuesto()->Exceso) * ($this->getImpuesto()->Porcentaje/100)) + $this->getImpuesto()->Base) /12;
+    public function getIr()
+    {
+        return
+            ((($this->getProyeccion()-$this->getImpuesto()->Exceso)
+            *
+            ($this->getImpuesto()->Porcentaje/100)) + $this->getImpuesto()->Base) /12;
     }
 
 
@@ -179,29 +214,36 @@ class Ir
      * @param float $pago
      * @return object
      */
-    private function addPago($pago)
+    private function addPago($pago, $fecha="")
     {
-        $this->pagos[] = $pago;
+        $this->pagos[$fecha] = $pago;
 
         return $this;
     }
 
     /**
      * @access private
+     * @param float $pago
      * @return object
      */
-    private function calcularPromedio()
+    private function addPagoInss($pago, $fecha="")
     {
-        return $this->getTotalPagado() / $this->getTotalPagos();
+        $this->setSalario($pago);
+        $this->setFecha($fecha);
+
+        $this->pagosInss[$fecha] = $pago - $this->getImpuestoEmpleado();
+
+        return $this;
     }
+
 
     /**
      * Proyectar Salario
      *
-     * @access private
+     * @access public
      * @return float
      */
-    private function getSalarioAnual()
+    public function getProyeccion()
     {
         if ($this->getModo() == "Quincenal") {
             return $this->getPromedio() * 24;
@@ -213,10 +255,10 @@ class Ir
     }
 
     /**
-     * @access private
+     * @access public
      * @return int
      */
-    private function getTotalPagos()
+    public function getCantidadPagos()
     {
         return count($this->pagos);
     }
@@ -233,5 +275,26 @@ class Ir
             $total += $valor;
         }
         return $total;
+    }
+
+    /**
+    * @access private
+    * @param boolean
+    * @return object
+    */
+    private function setCalcularInss($bool)
+    {
+        $this->calcularInss = $bool;
+
+        return $this;
+    }
+
+    /**
+     * @access private
+     * @return boolean
+     */
+    private function getCalcularInss()
+    {
+        return $this->calcularInss;
     }
 }
